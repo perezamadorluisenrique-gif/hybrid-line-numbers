@@ -1,0 +1,17 @@
+/*
+ * One column of numbers: while the plugin draws its own, Obsidian's is hidden.
+ * CodeMirror's base theme gives every gutter `display: flex !important`, so
+ * nothing weaker than !important can hide one.
+ */
+.hln-active .cm-gutter.cm-lineNumbers:not(.hln-gutter) {
+  display: none !important;
+}
+
+/* Digits of equal width, so the column does not wobble as the cursor moves. */
+.hln-gutter {
+  font-variant-numeric: tabular-nums;
+}
+
+.hln-gutter .hln-current {
+  color: var(--text-normal);
+}
