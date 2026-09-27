@@ -41,6 +41,22 @@ enabled, and you never get two columns.
 
 Neither has a hotkey by default; assign one in **Settings → Hotkeys**.
 
+## Vim's `:set number` and `:set relativenumber`
+
+With Vim key bindings on, the numbers answer to Vim's own options, typed on
+the `:` command line or put in a vimrc (for example with the Vimrc Support
+plugin):
+
+| Vim | Here |
+|---|---|
+| `:set nu rnu` | Hybrid |
+| `:set rnu nonu` | Relative |
+| `:set nu nornu` | Absolute |
+| `:set nonu nornu` | Hidden |
+
+The short names, `inv…`, `…!` and `:set nu?` work as in Vim, and a change
+is saved like one made in the settings.
+
 ## Settings
 
 | Setting | Default | |

@@ -102,3 +102,25 @@ test('stored modes are validated', () => {
   assert.equal(isNumberMode('Relative'), false);
   assert.equal(isNumberMode(undefined), false);
 });
+
+import { fromVimFlags, vimFlags } from '../src/numbers.ts';
+
+test('vimFlags answers :set number? and :set relativenumber? like Vim', () => {
+  assert.deepEqual(vimFlags(true, 'hybrid'), { number: true, relativenumber: true });
+  assert.deepEqual(vimFlags(true, 'relative'), { number: false, relativenumber: true });
+  assert.deepEqual(vimFlags(true, 'absolute'), { number: true, relativenumber: false });
+  assert.deepEqual(vimFlags(false, 'hybrid'), { number: false, relativenumber: false });
+});
+
+test('fromVimFlags maps both options back to a mode, and neither to hidden', () => {
+  assert.deepEqual(fromVimFlags({ number: true, relativenumber: true }, 'absolute'), { enabled: true, mode: 'hybrid' });
+  assert.deepEqual(fromVimFlags({ number: false, relativenumber: true }, 'hybrid'), { enabled: true, mode: 'relative' });
+  assert.deepEqual(fromVimFlags({ number: true, relativenumber: false }, 'hybrid'), { enabled: true, mode: 'absolute' });
+  assert.deepEqual(fromVimFlags({ number: false, relativenumber: false }, 'relative'), { enabled: false, mode: 'relative' });
+});
+
+test('every state survives a round trip through the Vim options', () => {
+  for (const mode of ['hybrid', 'relative', 'absolute'] as const) {
+    assert.deepEqual(fromVimFlags(vimFlags(true, mode), mode), { enabled: true, mode });
+  }
+});
