@@ -116,3 +116,33 @@ export function lineLabel(line: number, { mode, cursorLine, index }: LabelContex
 export function widestLabel(lineCount: number): string {
   return '9'.repeat(String(Math.max(lineCount, 1)).length);
 }
+
+/** Vim's two options, `number` and `relativenumber`, as this plugin's state. */
+export interface VimNumberFlags {
+  number: boolean;
+  relativenumber: boolean;
+}
+
+/**
+ * What `:set number?` and `:set relativenumber?` should answer for the
+ * current settings. Vim shows both kinds together (`nu rnu`) as hybrid.
+ */
+export function vimFlags(enabled: boolean, mode: NumberMode): VimNumberFlags {
+  return {
+    number: enabled && mode !== 'relative',
+    relativenumber: enabled && mode !== 'absolute',
+  };
+}
+
+/**
+ * The settings after a `:set`, following Vim: `nu rnu` is hybrid, `rnu`
+ * alone relative, `nu` alone absolute, neither hides the numbers. When the
+ * numbers are hidden the mode is kept, so turning them back on with the
+ * toggle command brings back what was there.
+ */
+export function fromVimFlags(flags: VimNumberFlags, mode: NumberMode): { enabled: boolean; mode: NumberMode } {
+  if (flags.number && flags.relativenumber) return { enabled: true, mode: 'hybrid' };
+  if (flags.relativenumber) return { enabled: true, mode: 'relative' };
+  if (flags.number) return { enabled: true, mode: 'absolute' };
+  return { enabled: false, mode };
+}

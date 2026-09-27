@@ -3,8 +3,8 @@ import type { SettingDefinitionItem } from 'obsidian';
 import type { Extension } from '@codemirror/state';
 
 import { hybridLineNumbers } from './src/extension.ts';
-import { NUMBER_MODES, isNumberMode } from './src/numbers.ts';
-import type { NumberMode } from './src/numbers.ts';
+import { NUMBER_MODES, fromVimFlags, isNumberMode, vimFlags } from './src/numbers.ts';
+import type { NumberMode, VimNumberFlags } from './src/numbers.ts';
 
 interface HybridLineNumbersSettings {
   /** Draw the gutter at all; the toggle command flips this. */
@@ -18,6 +18,27 @@ const DEFAULT_SETTINGS: HybridLineNumbersSettings = {
   mode: 'hybrid',
   absoluteInInsert: false,
 };
+
+/** The part of @replit/codemirror-vim's `Vim` object used for `:set`. */
+interface VimApi {
+  defineOption(
+    name: string,
+    defaultValue: unknown,
+    type: 'boolean',
+    aliases: string[],
+    callback?: (value: unknown) => unknown,
+  ): void;
+}
+
+/** Obsidian exposes the Vim module on the window, Vim mode on or off. */
+function vimApi(): VimApi | null {
+  return (window as unknown as { CodeMirrorAdapter?: { Vim?: VimApi } }).CodeMirrorAdapter?.Vim ?? null;
+}
+
+const VIM_OPTIONS: Array<[keyof VimNumberFlags, string]> = [
+  ['number', 'nu'],
+  ['relativenumber', 'rnu'],
+];
 
 const MODE_NAMES: Record<NumberMode, string> = {
   hybrid: 'Hybrid: line number on the cursor line, distance elsewhere',
@@ -42,6 +63,7 @@ export default class HybridLineNumbersPlugin extends Plugin {
     this.addCommand({
       id: 'toggle',
       name: 'Toggle line numbers',
+      icon: 'list-ordered',
       callback: () => {
         this.settings.enabled = !this.settings.enabled;
         void this.saveSettings();
@@ -50,6 +72,7 @@ export default class HybridLineNumbersPlugin extends Plugin {
     this.addCommand({
       id: 'next-mode',
       name: 'Switch to the next numbering mode',
+      icon: 'arrow-right-left',
       callback: () => {
         const next = NUMBER_MODES[(NUMBER_MODES.indexOf(this.settings.mode) + 1) % NUMBER_MODES.length];
         this.settings.mode = next;
@@ -59,6 +82,36 @@ export default class HybridLineNumbersPlugin extends Plugin {
     });
 
     this.addSettingTab(new HybridLineNumbersSettingTab(this.app, this));
+    this.defineVimOptions();
+  }
+
+  onunload() {
+    // Vim has no way to forget an option, so they are put back as plain
+    // ones that store a value and no longer reach this plugin.
+    const vim = vimApi();
+    for (const [name, alias] of VIM_OPTIONS) vim?.defineOption(name, false, 'boolean', [alias]);
+  }
+
+  /**
+   * `:set number`, `:set relativenumber`, their `no`, `inv` and `!` forms,
+   * and `:set nu?`, in the Vim command line or a vimrc. They drive this
+   * plugin's settings the way they drive Vim: `nu rnu` is hybrid.
+   */
+  private defineVimOptions(): void {
+    const vim = vimApi();
+    if (!vim) return;
+    for (const [name, alias] of VIM_OPTIONS) {
+      vim.defineOption(name, undefined, 'boolean', [alias], (value) => {
+        const flags = vimFlags(this.settings.enabled, this.settings.mode);
+        if (value === undefined) return flags[name];
+        // Vim calls this twice for one :set, globally and for the editor.
+        if (flags[name] === (value === true)) return undefined;
+        flags[name] = value === true;
+        Object.assign(this.settings, fromVimFlags(flags, this.settings.mode));
+        void this.saveSettings();
+        return undefined;
+      });
+    }
   }
 
   async loadSettings() {

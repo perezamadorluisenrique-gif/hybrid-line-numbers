@@ -4,6 +4,15 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
+## 0.2.0
+
+- Vim's `:set number` and `:set relativenumber` (`nu`, `rnu`, and their
+  `no`, `inv` and `!` forms) now drive the line numbers, from the `:`
+  command line or a vimrc: `nu rnu` is hybrid, `rnu` relative, `nu`
+  absolute, neither hides them. `:set nu?` reports the current state.
+- Both commands have an icon, so they show what they do instead of a
+  question mark when added to the mobile toolbar.
+
 ## 0.1.0
 
 First release.
