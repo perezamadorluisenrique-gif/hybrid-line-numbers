@@ -14,6 +14,11 @@ line is.
  3  Next paragraph
 ```
 
+![Hybrid line numbers in Obsidian: the cursor line shows 12, the lines around it show their distance, and the folded "Day one" section counts as a single line](https://raw.githubusercontent.com/perezamadorluisenrique-gif/hybrid-line-numbers/main/docs/hybrid.png)
+
+_The cursor is on line 12. Every other line shows how far away it is, and the
+folded "Day one" section counts as one line, so `3k` lands on it._
+
 ## What it does
 
 - **Hybrid** (the default): the real line number on the cursor line, the
