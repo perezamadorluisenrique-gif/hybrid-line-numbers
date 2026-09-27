@@ -1,6 +1,6 @@
 {
   "name": "hybrid-line-numbers",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hybrid Line Numbers for Obsidian - relative and hybrid line numbers that count a folded section as one line, for Vim-style jumps.",
   "main": "main.js",
   "scripts": {
