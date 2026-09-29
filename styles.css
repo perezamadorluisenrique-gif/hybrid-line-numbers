@@ -1,10 +1,19 @@
 /*
- * One column of numbers: while the plugin draws its own, Obsidian's is hidden.
- * CodeMirror's base theme gives every gutter `display: flex !important`, so
- * nothing weaker than !important can hide one.
+ * One column of numbers: while the plugin draws its own, Obsidian's shows
+ * nothing. CodeMirror's base theme gives every gutter `display: flex
+ * !important`, so the gutter itself cannot be hidden without matching that;
+ * emptying it (every element gone, no width) has the same effect.
  */
 .hln-active .cm-gutter.cm-lineNumbers:not(.hln-gutter) {
-  display: none !important;
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.hln-active .cm-gutter.cm-lineNumbers:not(.hln-gutter) .cm-gutterElement {
+  display: none;
 }
 
 /* Digits of equal width, so the column does not wobble as the cursor moves. */
