@@ -6,7 +6,7 @@ renames the `Unreleased` heading below to that version.
 
 ## 0.2.2
 
-- Remove a stray !important mention from the stylesheet; the gutter looks the same.
+- Line numbers in a popout window are created in that window's document, and the stylesheet no longer mentions `!important`; the gutter looks the same.
 
 ## 0.2.1
 

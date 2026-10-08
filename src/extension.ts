@@ -101,8 +101,9 @@ class NumberMarker extends GutterMarker {
     return other instanceof NumberMarker && other.text === this.text && other.elementClass === this.elementClass;
   }
 
-  toDOM(): Node {
-    return document.createTextNode(this.text);
+  toDOM(view: EditorView): Node {
+    // The editor's own document, so a note in a popout window gets nodes from that window.
+    return view.dom.ownerDocument.createTextNode(this.text);
   }
 }
 
