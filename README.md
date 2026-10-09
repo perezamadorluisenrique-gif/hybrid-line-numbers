@@ -32,10 +32,30 @@ folded "Day one" section counts as one line, so `3k` lands on it._
   "number toggle" setup.
 - In a Vim visual selection the numbers follow the cursor, not the other end
   of the selection.
+- **Select lines from the numbers**, like a code editor: see below.
 
 The plugin draws its own column of numbers and hides Obsidian's while it is on,
 so it works whether or not **Settings → Editor → Show line numbers** is
 enabled, and you never get two columns.
+
+## Selecting lines from the numbers
+
+The numbers work like the line numbers of a code editor:
+
+- **Click a number** to select that whole line, line break included, so
+  Backspace or Cut takes the line out cleanly. On the last line the selection
+  runs to the end of the note.
+- **Drag** over the numbers to select line by line. Drag above or below the
+  editor and the note scrolls along.
+- **Shift-click** a number to extend the selection to that line.
+- **Alt-click** (Option-click on a Mac) to add the line as another selection,
+  for editing several places at once.
+- **A folded section's number selects the whole section**, the hidden lines
+  too, and the section stays folded.
+
+With Vim key bindings, a selected line works like a Vim visual selection, so
+`d`, `y` or `c` act on it. Turn this off with **Select lines by clicking the
+numbers** if you prefer the numbers to ignore clicks.
 
 ## Commands
 
@@ -43,8 +63,15 @@ enabled, and you never get two columns.
 |---|---|
 | Toggle line numbers | Shows or hides the numbers. Obsidian's own line numbers come back while they are hidden, if you have them switched on. |
 | Switch to the next numbering mode | Hybrid → relative → absolute → hybrid. |
+| Go to relative line… | Type `+12` to move 12 lines down, `-5` to move 5 up, or `42` to go to line 42. |
 
-Neither has a hotkey by default; assign one in **Settings → Hotkeys**.
+**Go to relative line** counts the way the numbers do, so typing the number
+you see next to a line, with `+` or `-`, takes you there, and a folded section
+counts as one line. A line hidden inside a fold takes you to the fold, which
+stays closed. The cursor lands on the first character of the line that is not
+a space, as in Vim.
+
+None has a hotkey by default; assign one in **Settings → Hotkeys**.
 
 ## Vim's `:set number` and `:set relativenumber`
 
@@ -69,6 +96,7 @@ is saved like one made in the settings.
 | Show line numbers | On | The same as the toggle command. |
 | Numbering | Hybrid | Hybrid, relative or absolute. |
 | Absolute numbers in Vim insert mode | Off | Needs **Settings → Editor → Vim key bindings**. |
+| Select lines by clicking the numbers | On | Click, drag, Shift-click and Alt-click on the numbers select lines. |
 
 ## Coming from Relative Line Numbers
 
@@ -108,8 +136,10 @@ npm test          # needs Node 22.18 or later
 npm run build
 ```
 
-The numbering itself is plain arithmetic in `src/numbers.ts`, tested under
-Node; `src/extension.ts` is the CodeMirror gutter that draws it.
+The numbering itself is plain arithmetic in `src/numbers.ts`, and the line
+ranges a click selects and the line `+12` reaches are in `src/select.ts`, both
+tested under Node; `src/extension.ts` is the CodeMirror gutter that draws the
+numbers and handles the clicks.
 
 ## More plugins by Siulved54
 
