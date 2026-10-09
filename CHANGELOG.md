@@ -4,7 +4,7 @@ The release workflow uses the section named after the version being released
 as the release description, so every version needs one. `npm version <x.y.z>`
 renames the `Unreleased` heading below to that version.
 
-## Unreleased
+## 0.3.0
 
 - Select lines from the numbers, like a code editor: click a number to select its line, drag to select several (the note scrolls along), Shift-click to extend, Alt-click (Option on a Mac) to add another selection. A folded section's number selects the whole section. On by default; switch it off with "Select lines by clicking the numbers".
 - New command "Go to relative line…": type `+12`, `-5` or `42`. It counts a folded section as one line, like the numbers.
