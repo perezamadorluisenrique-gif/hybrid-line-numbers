@@ -89,6 +89,27 @@ export class LineIndex {
     return shown - this.hiddenBefore[i + 1];
   }
 
+  /**
+   * The last line of the screen row `line` is on: the line itself, or the
+   * last line its fold hides when it is a folded heading (or inside one).
+   */
+  rowEnd(line: number): number {
+    const shown = this.shownLine(line);
+    const i = this.spanAt(shown + 1);
+    if (i >= 0 && this.spans[i][0] === shown + 1) return this.spans[i][1];
+    return shown;
+  }
+
+  /** The line shown at screen row `row` (1-based), the inverse of `screenRow`. */
+  lineAtRow(row: number): number {
+    let line = row;
+    for (const [first, last] of this.spans) {
+      if (first > line) break;
+      line += last - first + 1;
+    }
+    return line;
+  }
+
   distance(line: number, cursorLine: number): number {
     return Math.abs(this.screenRow(line) - this.screenRow(cursorLine));
   }

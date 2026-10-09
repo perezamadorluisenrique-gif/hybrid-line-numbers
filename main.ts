@@ -1,8 +1,9 @@
-import { App, Plugin, PluginSettingTab, Setting } from 'obsidian';
-import type { SettingDefinitionItem } from 'obsidian';
+import { App, Modal, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import type { Editor, SettingDefinitionItem } from 'obsidian';
 import type { Extension } from '@codemirror/state';
+import type { EditorView } from '@codemirror/view';
 
-import { hybridLineNumbers } from './src/extension.ts';
+import { goToLine, hybridLineNumbers } from './src/extension.ts';
 import { NUMBER_MODES, fromVimFlags, isNumberMode, vimFlags } from './src/numbers.ts';
 import type { NumberMode, VimNumberFlags } from './src/numbers.ts';
 
@@ -11,13 +12,63 @@ interface HybridLineNumbersSettings {
   enabled: boolean;
   mode: NumberMode;
   absoluteInInsert: boolean;
+  selectLines: boolean;
 }
 
 const DEFAULT_SETTINGS: HybridLineNumbersSettings = {
   enabled: true,
   mode: 'hybrid',
   absoluteInInsert: false,
+  selectLines: true,
 };
+
+type BooleanSetting = 'enabled' | 'absoluteInInsert' | 'selectLines';
+const BOOLEAN_SETTINGS: readonly string[] = ['enabled', 'absoluteInInsert', 'selectLines'] satisfies BooleanSetting[];
+
+/** Obsidian's editor is a CodeMirror 6 view underneath, reachable as `cm`. */
+function editorView(editor: Editor): EditorView | null {
+  return (editor as Editor & { cm?: EditorView }).cm ?? null;
+}
+
+/** Asks for `+12`, `-5` or `42` and moves the cursor there. */
+class GoToLineModal extends Modal {
+  constructor(
+    app: App,
+    private readonly editor: Editor,
+    private readonly view: EditorView,
+  ) {
+    super(app);
+  }
+
+  onOpen(): void {
+    this.titleEl.setText('Go to relative line');
+    const input = this.contentEl.createEl('input', {
+      type: 'text',
+      cls: 'hln-goto-input',
+      attr: { placeholder: '+12, -5 or 42', 'aria-label': 'Rows to move, or a line number' },
+    });
+    const hint = this.contentEl.createDiv({
+      cls: 'setting-item-description',
+      text: '+ moves down and - moves up that many lines, a folded section counting as one. A plain number goes to that line.',
+    });
+    input.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.isComposing) return;
+      event.preventDefault();
+      if (goToLine(this.view, input.value)) {
+        this.close();
+        this.editor.focus();
+      } else {
+        hint.setText('Type +12 to move down, -5 to move up, or 42 to go to line 42.');
+        hint.addClass('mod-warning');
+      }
+    });
+    input.focus();
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
+  }
+}
 
 /** The part of @replit/codemirror-vim's `Vim` object used for `:set`. */
 interface VimApi {
@@ -81,6 +132,18 @@ export default class HybridLineNumbersPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: 'go-to-relative-line',
+      name: 'Go to relative line…',
+      icon: 'arrow-down-up',
+      editorCheckCallback: (checking, editor) => {
+        const view = editorView(editor);
+        if (!view) return false;
+        if (!checking) new GoToLineModal(this.app, editor, view).open();
+        return true;
+      },
+    });
+
     this.addSettingTab(new HybridLineNumbersSettingTab(this.app, this));
     this.defineVimOptions();
   }
@@ -131,7 +194,11 @@ export default class HybridLineNumbersPlugin extends Plugin {
     this.editorExtension.length = 0;
     if (this.settings.enabled) {
       this.editorExtension.push(
-        hybridLineNumbers({ mode: this.settings.mode, absoluteInInsert: this.settings.absoluteInInsert }),
+        hybridLineNumbers({
+          mode: this.settings.mode,
+          absoluteInInsert: this.settings.absoluteInInsert,
+          selectLines: this.settings.selectLines,
+        }),
       );
     }
     this.app.workspace.updateOptions();
@@ -159,6 +226,10 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
       name: 'Absolute numbers in Vim insert mode',
       desc: 'Relative numbers in normal and visual mode, line numbers while typing. Needs Vim key bindings.',
     },
+    selectLines: {
+      name: 'Select lines by clicking the numbers',
+      desc: 'Click a number to select its line, drag to select several, Shift-click to extend the selection, Alt-click (Option on a Mac) to add a line as another selection.',
+    },
   } as const;
 
   /**
@@ -181,6 +252,10 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
         ...text.absoluteInInsert,
         control: { type: 'toggle', key: 'absoluteInInsert', defaultValue: DEFAULT_SETTINGS.absoluteInInsert },
       },
+      {
+        ...text.selectLines,
+        control: { type: 'toggle', key: 'selectLines', defaultValue: DEFAULT_SETTINGS.selectLines },
+      },
     ];
   }
 
@@ -192,8 +267,8 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
     const settings = this.plugin.settings;
     if (key === 'mode') {
       if (isNumberMode(value)) settings.mode = value;
-    } else if (key === 'enabled' || key === 'absoluteInInsert') {
-      settings[key] = value === true;
+    } else if (BOOLEAN_SETTINGS.includes(key)) {
+      settings[key as BooleanSetting] = value === true;
     }
     await this.plugin.saveSettings();
   }
@@ -226,6 +301,14 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
         toggle
           .setValue(this.plugin.settings.absoluteInInsert)
           .onChange((value) => this.setControlValue('absoluteInInsert', value)),
+      );
+    new Setting(containerEl)
+      .setName(text.selectLines.name)
+      .setDesc(text.selectLines.desc)
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.selectLines)
+          .onChange((value) => this.setControlValue('selectLines', value)),
       );
   }
 }

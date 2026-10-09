@@ -24,3 +24,12 @@
 .hln-gutter .hln-current {
   color: var(--text-normal);
 }
+
+/* Line numbers that select their line show it with the pointer. */
+.hln-select-lines .hln-gutter .cm-gutterElement {
+  cursor: pointer;
+}
+
+.hln-goto-input {
+  width: 100%;
+}
