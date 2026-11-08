@@ -6,6 +6,7 @@ import type { EditorView } from '@codemirror/view';
 import { goToLine, hybridLineNumbers } from './src/extension.ts';
 import { NUMBER_MODES, fromVimFlags, isNumberMode, vimFlags } from './src/numbers.ts';
 import type { NumberMode, VimNumberFlags } from './src/numbers.ts';
+import { moreDefinitions, renderMore } from './src/more-link.ts';
 
 interface HybridLineNumbersSettings {
   /** Draw the gutter at all; the toggle command flips this. */
@@ -256,6 +257,7 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
         ...text.selectLines,
         control: { type: 'toggle', key: 'selectLines', defaultValue: DEFAULT_SETTINGS.selectLines },
       },
+      ...(moreDefinitions() as SettingDefinitionItem[]),
     ];
   }
 
@@ -310,5 +312,6 @@ class HybridLineNumbersSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.selectLines)
           .onChange((value) => this.setControlValue('selectLines', value)),
       );
+    renderMore(this.containerEl, (el) => new Setting(el));
   }
 }
